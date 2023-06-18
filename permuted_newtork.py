@@ -106,4 +106,3 @@ class PermutedNetwork_2(nn.Module):
         return x
         
 
-
