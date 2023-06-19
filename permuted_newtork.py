@@ -10,7 +10,6 @@ class PermutedNetwork(nn.Module):
         self.conv_offset_1 = nn.Conv2d(1,3*3*2, kernel_size=3, padding=0, bias=True)
         self.conv1 = DeformConv2d(1, 16, kernel_size=3, stride=1, padding=0)
 
-
         self.conv_offset_2 = nn.Conv2d(16,3*3*2, kernel_size=3, padding=0, bias=True)
         self.conv2 = DeformConv2d(16, 32, kernel_size=3, stride=1, padding=0)
         
@@ -37,22 +36,22 @@ class PermutedNetwork(nn.Module):
     def forward(self, x):
 
 
-        offset = torch.relu(self.conv_offset_1(x))
+        offset = self.conv_offset_1(x)
         x = torch.relu(self.conv1(x, offset))
 
-        offset = torch.relu(self.conv_offset_2(x))
+        offset = self.conv_offset_2(x)
         x = torch.relu(self.conv2(x, offset))
 
-        offset = torch.relu(self.conv_offset_3(x))
-        x = torch.relu(self.conv3(x, offset))
+        offset = self.conv_offset_3(x)
+        x = self.conv3(x, offset)
 
-        offset = torch.relu(self.conv_offset_4(x))
+        offset = self.conv_offset_4(x)
         x = torch.relu(self.conv4(x, offset))
 
-        offset = torch.relu(self.conv_offset_5(x))
+        offset = self.conv_offset_5(x)
         x = torch.relu(self.conv5(x, offset))
 
-        offset = torch.relu(self.conv_offset_6(x))
+        offset = self.conv_offset_6(x)
         x = torch.relu(self.conv6(x, offset))
 
         x = x.flatten(start_dim=1)
@@ -86,17 +85,17 @@ class PermutedNetwork_2(nn.Module):
     def forward(self, x):
 
 
-        offset = torch.relu(self.conv_offset_1(x))
+        offset = self.conv_offset_1(x)
         x = torch.relu(self.conv1(x, offset)) # 33x33
 
         x = self.pool(x) # 15x15
 
-        offset = torch.relu(self.conv_offset_2(x))
+        offset = self.conv_offset_2(x)
         x = torch.relu(self.conv2(x, offset)) # 14x14
 
         x = self.pool(x) # 7x7
 
-        offset = torch.relu( self.conv_offset_3(x) )
+        offset = self.conv_offset_3(x) 
         x = torch.relu( self.conv3(x, offset) )
 
         x = self.gap(x)
