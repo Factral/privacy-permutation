@@ -72,14 +72,14 @@ class PermutedNetwork_2(nn.Module):
         self.conv2 = DeformConv2d(16, 32, kernel_size=3, stride=1, padding=1)
         
         self.conv_offset_3 = nn.Conv2d(32,3*3*2, kernel_size=3, padding=1, bias=True)
-        self.conv3 = DeformConv2d(32, 16, kernel_size=3, stride=1, padding=1)
+        self.conv3 = DeformConv2d(32, 64, kernel_size=3, stride=1, padding=1)
         
 
         self.pool = nn.MaxPool2d(2, 2)  
         self.batchnorm = nn.BatchNorm2d(16)
-        self.gap = nn.AdaptiveAvgPool2d( (1, 1) )
+        self.gap = nn.AdaptiveAvgPool2d( (3, 3) )
 
-        self.fc = nn.Linear(16, 10)
+        self.fc = nn.Linear(16 * 3 * 3, 10)
 
 
     def forward(self, x):
@@ -109,39 +109,55 @@ class NormalNetwork(nn.Module):
     def __init__(self):
         super(NormalNetwork, self).__init__()
 
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1)
+        self.encoder = nn.Sequential(
+            nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d( (5, 5) )
+        ) 
 
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
         
-        self.conv3 = nn.Conv2d(32, 16, kernel_size=3, stride=1, padding=1)
-        
-
-        self.pool = nn.MaxPool2d(2, 2)  
-        self.batchnorm = nn.BatchNorm2d(16)
-        self.gap = nn.AdaptiveAvgPool2d( (1, 1) )
-
-        self.fc = nn.Linear(16, 10)
+        self.fc = nn.Linear(64 * 5 * 5, 10)
 
 
     def forward(self, x):
 
+        x = self.encoder(x)
 
-
-        x = torch.relu(self.conv1(x)) # 33x33
-
-        x = self.pool(x) # 15x15
-
-
-        x = torch.relu(self.conv2(x)) # 14x14
-
-        x = self.pool(x) # 7x7
-
-
-        x = torch.relu( self.conv3(x) )
-
-        x = self.gap(x)
         x = x.flatten(start_dim=1)
+
         x = self.fc(x)
 
         return x
         
+
+
+
+class NormalNetwork_latentspace(nn.Module):
+    def __init__(self):
+        super(NormalNetwork_latentspace, self).__init__()
+        
+
+        self.encoder = nn.Sequential(
+            nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d( (5, 5) )
+        )
+
+
+    def forward(self, x):
+
+        x = self.encoder(x)
+
+        return x
