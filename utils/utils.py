@@ -119,6 +119,18 @@ def get_index_pool(index, size):
     index_range = range(size)
     return [[index[0] + i, index[1] + j] for i in index_range for j in index_range]
 
+def get_pixels_from_coordinates(input, coordinates):
+    # coordinates is a list like this: [[0, 0], [0, 1], [1, 0], [1, 1]]
+    # input is a tensor of shape (batch, channels, height, width)
+    # this function returns a tensor of shape (batch, channels, len(coordinates))
+
+    batch_size, channels, height, width = input.shape
+    pixels = torch.zeros((batch_size, channels, len(coordinates)), dtype=input.dtype, device=input.device)
+
+    for i, coordinate in enumerate(coordinates):
+        pixels[:, :, i] = input[:, :, coordinate[0], coordinate[1]]
+
+    return pixels
 
 
 def calculate_offset(dims, stride, padding, kernel_size, permutation, batch=64):
@@ -155,3 +167,23 @@ def calculate_offset(dims, stride, padding, kernel_size, permutation, batch=64):
 
     offset = np.tile(offset, [batch, 1, 1, 1])
     return torch.from_numpy(offset).float(), perm
+
+
+
+def deform_maxPool2d(input,kernel_size,stride,padding):
+    dims = input.shape[-1]
+
+    output_dims = (dims + 2 * padding - (kernel_size - 1) - 1) // stride + 1
+
+    index_positions = calculate_index_pool(dims,stride,padding,kernel_size)
+    index_positions = np.transpose(index_positions, (2, 0, 1))
+        
+    batch_size, channels, height, width = input.shape
+
+    result = torch.zeros(batch_size,channels,output_dims,output_dims)
+
+    for i in range(output_dims):
+        for j in range(output_dims):
+            positions = get_index_pool(index_positions[:, i, j], kernel_size)
+            pixels = get_pixels_from_coordinates(input, positions)
+            result[:,:,i,j] = torch.amax(pixels,2)
