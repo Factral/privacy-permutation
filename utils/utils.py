@@ -187,3 +187,5 @@ def deform_maxPool2d(input,kernel_size,stride,padding):
             positions = get_index_pool(index_positions[:, i, j], kernel_size)
             pixels = get_pixels_from_coordinates(input, positions)
             result[:,:,i,j] = torch.amax(pixels,2)
+
+    return result
