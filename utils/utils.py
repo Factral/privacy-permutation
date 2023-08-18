@@ -178,8 +178,11 @@ def retrieve_original_pixels(positions,perm):
     pix_pos.append(fake_pos.squeeze())
   return pix_pos
 
-def deform_maxPool2d(input,perm,kernel_size,stride,padding):
+def deform_maxPool2d(input,perm,kernel_size,stride=None,padding=0):
     dims = input.shape[-1]
+
+    if stride is None:
+        stride = kernel_size
 
     output_dims = (dims + 2 * padding - (kernel_size - 1) - 1) // stride + 1
 
