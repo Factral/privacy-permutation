@@ -169,8 +169,16 @@ def calculate_offset(dims, stride, padding, kernel_size, permutation, batch=64):
     return torch.from_numpy(offset).float(), perm
 
 
+def retrieve_original_pixels(positions,perm):
+  pixel_positions = np.array([perm.get_start_block(xi) for xi in perm.key])
+  pix_pos = []
+  for pos in positions:
+    index = np.where((pixel_positions == pos).all(axis=1))[0]
+    fake_pos = perm.get_start_block(index)
+    pix_pos.append(fake_pos.squeeze())
+  return pix_pos
 
-def deform_maxPool2d(input,kernel_size,stride,padding):
+def deform_maxPool2d(input,perm,kernel_size,stride,padding):
     dims = input.shape[-1]
 
     output_dims = (dims + 2 * padding - (kernel_size - 1) - 1) // stride + 1
@@ -185,7 +193,8 @@ def deform_maxPool2d(input,kernel_size,stride,padding):
     for i in range(output_dims):
         for j in range(output_dims):
             positions = get_index_pool(index_positions[:, i, j], kernel_size)
-            pixels = get_pixels_from_coordinates(input, positions)
+            org_position = retrieve_original_pixels(positions,perm)
+            pixels = get_pixels_from_coordinates(input, org_position)
             result[:,:,i,j] = torch.amax(pixels,2)
 
     return result
