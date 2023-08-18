@@ -88,10 +88,37 @@ def calculate_index_conv(dims, stride, padding, kernel_size):
     # Calcula los índices de los píxeles centrales
     center_indices[:, :, 0] = np.arange(-padding + kernel_size // 2, dims + padding - kernel_size // 2, stride)[:,
                               np.newaxis]
+    
     center_indices[:, :, 1] = np.arange(-padding + kernel_size // 2, dims + padding - kernel_size // 2, stride)[
                               np.newaxis, :]
 
     return center_indices
+
+def calculate_index_pool(dims, stride, padding, kernel_size):
+    # Calcula el tamaño de la salida de el pool
+    output_dims = (dims + 2 * padding - (kernel_size - 1) - 1) // stride + 1
+
+    # Crea una matriz para almacenar los índices de los píxeles centrales
+    center_indices = np.zeros((output_dims, output_dims, 2), dtype=int)
+
+    # Calcula los índices de los píxeles centrales
+    center_indices[:, :, 0] = np.arange(-padding + kernel_size // 2 - 1, dims + padding - kernel_size // 2, stride)[:,
+                              np.newaxis]
+    
+    center_indices[:, :, 1] = np.arange(-padding + kernel_size // 2 - 1, dims + padding - kernel_size // 2, stride)[
+                              np.newaxis, :]
+
+    return center_indices
+
+
+def get_index_pool(index, size):
+    # this will return in a list, the index of all pixels that are in the pool
+    # index is the pixel target, the left top corner of the pool, like [0,0]
+    # the pool is size x size
+
+    index_range = range(size)
+    return [[index[0] + i, index[1] + j] for i in index_range for j in index_range]
+
 
 
 def calculate_offset(dims, stride, padding, kernel_size, permutation, batch=64):
