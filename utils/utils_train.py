@@ -15,6 +15,8 @@ import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
+sys.path.append(os.path.join('..'))
+
 
 def get_network(args):
     """ return given network
