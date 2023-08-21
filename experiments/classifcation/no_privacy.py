@@ -118,7 +118,7 @@ def eval_training(epoch=0, tb=True):
     print()
 
     wandb.log({'epochs': epoch,
-            '(train) Total loss': loss_item / len(cifar100_training_loader.dataset),
+            '(train) Total loss': loss_item,
             'LR': optimizer.param_groups[0]['lr'],
             '(test) Metric loss': test_loss / len(cifar100_test_loader.dataset),
             '(test) Accuracy': correct.float() / len(cifar100_test_loader.dataset)
