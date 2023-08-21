@@ -28,7 +28,7 @@ sys.path.append(os.path.join('..', '..', 'utils'))
 sys.path.append(os.path.join('..', '..', 'conf'))
 
 from conf import settings
-from utils import get_network, get_training_dataloader, get_test_dataloader, WarmUpLR, \
+from utils_train import get_network, get_training_dataloader, get_test_dataloader, WarmUpLR, \
     most_recent_folder, most_recent_weights, last_epoch, best_acc_weights
 
 
