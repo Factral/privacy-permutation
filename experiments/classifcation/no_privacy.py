@@ -25,7 +25,7 @@ import wandb
 import sys
 
 sys.path.append(os.path.join('..', '..', 'utils'))
-sys.path.append(os.path.join('..', '..', 'conf'))
+sys.path.append(os.path.join('..'))
 
 from conf import settings
 from utils_train import get_network, get_training_dataloader, get_test_dataloader, WarmUpLR, \
