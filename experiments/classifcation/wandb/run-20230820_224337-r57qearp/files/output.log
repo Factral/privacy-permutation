@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "C:\Users\nelso\OneDrive - UNIVERSIDAD INDUSTRIAL DE SANTANDER\Documentos\privacy-permutation\experiments\classifcation\no_privacy.py", line 160, in <module>
+    net = get_network(args)
+  File "..\..\utils\utils_train.py", line 163, in get_network
+    net = net.cuda()
+  File "C:\Users\nelso\AppData\Local\Programs\Python\Python39\lib\site-packages\torch\nn\modules\module.py", line 749, in cuda
+    return self._apply(lambda t: t.cuda(device))
+  File "C:\Users\nelso\AppData\Local\Programs\Python\Python39\lib\site-packages\torch\nn\modules\module.py", line 641, in _apply
+    module._apply(fn)
+  File "C:\Users\nelso\AppData\Local\Programs\Python\Python39\lib\site-packages\torch\nn\modules\module.py", line 641, in _apply
+    module._apply(fn)
+  File "C:\Users\nelso\AppData\Local\Programs\Python\Python39\lib\site-packages\torch\nn\modules\module.py", line 664, in _apply
+    param_applied = fn(param)
+  File "C:\Users\nelso\AppData\Local\Programs\Python\Python39\lib\site-packages\torch\nn\modules\module.py", line 749, in <lambda>
+    return self._apply(lambda t: t.cuda(device))
+  File "C:\Users\nelso\AppData\Local\Programs\Python\Python39\lib\site-packages\torch\cuda\__init__.py", line 221, in _lazy_init
+    raise AssertionError("Torch not compiled with CUDA enabled")
+AssertionError: Torch not compiled with CUDA enabled

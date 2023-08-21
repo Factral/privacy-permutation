@@ -25,9 +25,9 @@ import wandb
 import sys
 
 sys.path.append(os.path.join('..', '..', 'utils'))
-sys.path.append(os.path.join('..'))
+sys.path.append(os.path.join('..', '..'))
 
-from conf import settings
+from conf import global_settings as settings
 from utils_train import get_network, get_training_dataloader, get_test_dataloader, WarmUpLR, \
     most_recent_folder, most_recent_weights, last_epoch, best_acc_weights
 
