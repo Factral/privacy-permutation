@@ -22,7 +22,7 @@ sys.path.append(os.path.join('..', '..', 'utils'))
 sys.path.append(os.path.join('..', '..'))
 
 from conf import global_settings as settings
-from utils_train import get_network, get_test_dataloader
+from utils_train import get_network, get_test_dataloader, get_test_dataloader_permuted
 
 if __name__ == '__main__':
 
@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     net = get_network(args)
 
-    cifar100_test_loader = get_test_dataloader(
+    cifar100_test_loader = get_test_dataloader_permuted(
         settings.CIFAR100_TRAIN_MEAN,
         settings.CIFAR100_TRAIN_STD,
         #settings.CIFAR100_PATH,
