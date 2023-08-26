@@ -50,7 +50,7 @@ if __name__ == '__main__':
     correct_1 = 0.0
     correct_5 = 0.0
     total = 0
-    correct_acc = 0.0
+    correct = 0.0
 
     with torch.no_grad():
         for n_iter, (image, label) in enumerate(cifar100_test_loader):
@@ -64,18 +64,16 @@ if __name__ == '__main__':
 
 
             output = net(image)
-            _, pred = output.topk(5, 1, largest=True, sorted=True)
+            
+            #_, pred = output.topk(5, 1, largest=True, sorted=True)
+            _, preds = output.max(1)
 
-            label = label.view(label.size(0), -1).expand_as(pred)
-            correct = pred.eq(label).float()
+            #print(pred == preds)
+            #print(pred.shape)
+            #print(preds.shape)
 
-            #compute top 5
-            correct_5 += correct[:, :5].sum()
-
-            #compute top1
-            correct_1 += correct[:, :1].sum()
-
-            correct_acc += correct.sum()
+            #label = label.view(label.size(0), -1).expand_as(pred)
+            correct += preds.eq(label).sum()
 
     if args.gpu:
         print('GPU INFO.....')
@@ -84,5 +82,5 @@ if __name__ == '__main__':
     print()
     print("Top 1 err: ", 1 - correct_1 / len(cifar100_test_loader.dataset))
     print("Top 5 err: ", 1 - correct_5 / len(cifar100_test_loader.dataset))
-    print("Acc err: ",correct_acc.float() / len(cifar100_test_loader.dataset))
+    print("Acc err: ", correct.float() / len(cifar100_test_loader.dataset))
     print("Parameter numbers: {}".format(sum(p.numel() for p in net.parameters())))
