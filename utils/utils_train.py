@@ -93,8 +93,8 @@ def dataset_loader(type, mean,std,batch_size,num_workers,shuffle, shuffle_pixels
         b = permkey.desordenar(a[0][0]) if permkey is not None else perm.desordenar(a[0][0])
         testset = torch.utils.data.TensorDataset(b,a[0][1])
     
-    trainloader = DataLoader(trainset, shuffle=shuffle, num_workers=num_workers, batch_size=batch_size)
-    testloader = DataLoader(testset, shuffle=shuffle, num_workers=num_workers, batch_size=batch_size)
+    trainloader = DataLoader(trainset, shuffle=shuffle, num_workers=num_workers, batch_size=batch_size, drop_last=True)
+    testloader = DataLoader(testset, shuffle=shuffle, num_workers=num_workers, batch_size=batch_size, drop_last=True)
 
     perm = permkey if permkey is not None else perm
 
