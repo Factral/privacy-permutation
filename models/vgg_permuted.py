@@ -8,9 +8,9 @@ sys.path.append('..')
 
 import utils.utils as utils
 
-class VGG(nn.Module):
+class VGG_permuted(nn.Module):
     """
-    Standard PyTorch implementation of VGG.
+    PyTorch implementation of deformed VGG.
     """
     def __init__(self,initial_perm):
         super().__init__()
@@ -71,9 +71,3 @@ class VGG(nn.Module):
         x = self.classifier(x)
         return x
         
-
-def get_vgg():
-    vgg = VGG()
-    #temp = torchvision.models.vgg16(pretrained=True)
-    #vgg.load_state_dict(temp.state_dict())
-    return vgg

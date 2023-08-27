@@ -28,8 +28,8 @@ sys.path.append(os.path.join('..', '..', 'utils'))
 sys.path.append(os.path.join('..', '..'))
 
 from conf import global_settings as settings
-from utils_train import dataset_loader, get_network, get_training_dataloader, get_test_dataloader, WarmUpLR, \
-    most_recent_folder, most_recent_weights, last_epoch, best_acc_weights, get_training_dataloader_permuted, get_test_dataloader_permuted
+from utils_train import dataset_loader, get_network, WarmUpLR, \
+    most_recent_folder, most_recent_weights, last_epoch, best_acc_weights
 
 
 def train(epoch):
@@ -51,11 +51,7 @@ def train(epoch):
         n_iter = (epoch - 1) * len(training_loader) + batch_index + 1
 
         last_layer = list(net.children())[-1]
-        #for name, para in last_layer.named_parameters():
-        #    if 'weight' in name:
-        #        writer.add_scalar('LastLayerGradients/grad_norm2_weights', para.grad.norm(), n_iter)
-        #    if 'bias' in name:
-        #        writer.add_scalar('LastLayerGradients/grad_norm2_bias', para.grad.norm(), n_iter)
+
 
         print('Training Epoch: {epoch} [{trained_samples}/{total_samples}]\tLoss: {:0.4f}\tLR: {:0.6f}'.format(
             loss.item(),
@@ -65,16 +61,9 @@ def train(epoch):
             total_samples=len(training_loader.dataset)
         ))
 
-        #update training loss for each iteration
-        #writer.add_scalar('Train/loss', loss.item(), n_iter)
-
         if epoch <= args.warm:
             warmup_scheduler.step()
 
-    #for name, param in net.named_parameters():
-    #    layer, attr = os.path.splitext(name)
-    #    attr = attr[1:]
-    #    writer.add_histogram("{}/{}".format(layer, attr), param, epoch)
 
     finish = time.time()
 
@@ -124,7 +113,6 @@ def eval_training(epoch=0, tb=True):
                 'LR': optimizer.param_groups[0]['lr'],
                 '(test) Metric loss': test_loss / len(test_loader.dataset),
                 '(test) Accuracy': correct.float() / len(test_loader.dataset)
-                #'(test) Metric loss': loss_ce_test / len(dataloader_test)
              })
     except:
                 wandb.log({'epochs': epoch,
@@ -132,7 +120,6 @@ def eval_training(epoch=0, tb=True):
                 'LR': optimizer.param_groups[0]['lr'],
                 '(test) Metric loss': test_loss / len(test_loader.dataset),
                 '(test) Accuracy': correct.float() / len(test_loader.dataset)
-                #'(test) Metric loss': loss_ce_test / len(dataloader_test)
              })
 
     return correct.float() / len(test_loader.dataset)
@@ -141,14 +128,14 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-net', type=str, required=True, help='net type')
-    parser.add_argument('-gpu', action='store_true', default=False, help='use gpu or not')
+    parser.add_argument('-dataset', type=str, help='dataset used for training')
     parser.add_argument('-permute', action='store_true', default=False, help='permute train data or not')
     parser.add_argument('-b', type=int, default=128, help='batch size for dataloader')
     parser.add_argument('-warm', type=int, default=1, help='warm up training phase')
     parser.add_argument('-lr', type=float, default=0.1, help='initial learning rate')
-    parser.add_argument('-resume', action='store_true', default=False, help='resume training')
+    parser.add_argument('-load_weights', action='store_true', default=False, help='load weights for finetuning')
+    parser.add_argument('-gpu', action='store_true', default=False, help='use gpu or not')
     parser.add_argument('-save_weights', action='store_true', default=False, help='resume training')
-    parser.add_argument('-dataset', type=str, help='dataset used for training')
 
     args = parser.parse_args()
 
@@ -189,7 +176,7 @@ if __name__ == '__main__':
     iter_per_epoch = len(training_loader)
     warmup_scheduler = WarmUpLR(optimizer, iter_per_epoch * args.warm)
 
-    if args.resume:
+    if args.load_weights:
         recent_folder = most_recent_folder(os.path.join(settings.CHECKPOINT_PATH, args.net), fmt=settings.DATE_FORMAT)
         if not recent_folder:
             raise Exception('no recent folder were found')
@@ -203,19 +190,15 @@ if __name__ == '__main__':
     if not os.path.exists(settings.LOG_DIR):
         os.mkdir(settings.LOG_DIR)
 
-    #since tensorboard can't overwrite old values
-    #so the only way is to create a new tensorboard log
-    #writer = SummaryWriter(log_dir=os.path.join(
-    #        settings.LOG_DIR, args.net, settings.TIME_NOW))
-
     #create checkpoint folder to save model
     if not os.path.exists(checkpoint_path):
         os.makedirs(checkpoint_path)
     checkpoint_path = os.path.join(checkpoint_path, '{net}-{epoch}-{type}.pth')
 
     best_acc = 0.0
-    if args.resume:
+    if args.load_weights:
         best_weights = best_acc_weights(os.path.join(settings.CHECKPOINT_PATH, args.net, recent_folder))
+        
         if best_weights:
             weights_path = os.path.join(settings.CHECKPOINT_PATH, args.net, recent_folder, best_weights)
             print('found best acc weights file:{}'.format(weights_path))
@@ -227,12 +210,11 @@ if __name__ == '__main__':
         recent_weights_file = most_recent_weights(os.path.join(settings.CHECKPOINT_PATH, args.net, recent_folder))
         if not recent_weights_file:
             raise Exception('no recent weights file were found')
+        
         weights_path = os.path.join(settings.CHECKPOINT_PATH, args.net, recent_folder, recent_weights_file)
         print('loading weights file {} to resume training.....'.format(weights_path))
         net.load_state_dict(torch.load(weights_path))
 
-        resume_epoch = last_epoch(os.path.join(settings.CHECKPOINT_PATH, args.net, recent_folder))
-        print('resume training start epoch {}'.format(resume_epoch))
         resume_epoch = 1
 
 
@@ -240,7 +222,7 @@ if __name__ == '__main__':
         if epoch > args.warm:
             train_scheduler.step(epoch)
 
-        if args.resume:
+        if args.load_weights:
             if epoch <= resume_epoch:
                 continue
 
@@ -261,5 +243,3 @@ if __name__ == '__main__':
             print('saving weights file to {}'.format(weights_path))
             if args.save_weights:
                 torch.save(net.state_dict(), weights_path)
-
-#    writer.close()
