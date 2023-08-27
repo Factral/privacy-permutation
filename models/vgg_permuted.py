@@ -138,12 +138,11 @@ class VGG_permuted(nn.Module):
 
         output = self.pool5.new_perm.ordenar(output.squeeze(0)) #order latent space
 
-        print(output.shape)
+
 
         output = output.view(output.size()[0], -1)
         output = self.classifier(output)
 
-        print(output.shape)
 
         return output
 
