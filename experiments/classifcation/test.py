@@ -58,7 +58,9 @@ if __name__ == '__main__':
         permkey = perm
     )
 
-    net.load_state_dict(torch.load(args.weights))
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    net.load_state_dict(torch.load(args.weights, map_location=device))
     print(net)
     net.eval()
 
