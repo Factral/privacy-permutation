@@ -54,6 +54,10 @@ if __name__ == '__main__':
         shuffle=True,
         shuffle_pixels = args.permute
     )
+
+    if args.gpu:
+        net = net.cuda()
+
     net.load_state_dict(torch.load(args.weights))
     print(net)
     net.eval()
