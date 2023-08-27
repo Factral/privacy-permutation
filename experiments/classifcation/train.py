@@ -130,6 +130,7 @@ if __name__ == '__main__':
     parser.add_argument('-net', type=str, required=True, help='net type')
     parser.add_argument('-dataset', type=str, help='dataset used for training')
     parser.add_argument('-permute', action='store_true', default=False, help='permute train data or not')
+    parser.add_argument('-epochs', type=int, help='epochs for training')
     parser.add_argument('-b', type=int, default=128, help='batch size for dataloader')
     parser.add_argument('-warm', type=int, default=1, help='warm up training phase')
     parser.add_argument('-lr', type=float, default=0.1, help='initial learning rate')
@@ -143,7 +144,7 @@ if __name__ == '__main__':
     wandb.login(key='fe0119224af6709c85541483adf824cec731879e')
     config = {
                 "learning_rate": args.lr,
-                "epochs": settings.EPOCH,
+                "epochs": args.epochs,
                 "batch_size": args.b,
                 "architecture": "normal VGG16 FINETUNED"
             }
@@ -218,7 +219,7 @@ if __name__ == '__main__':
         resume_epoch = 1
 
 
-    for epoch in range(1, settings.EPOCH + 1):
+    for epoch in range(1, args.epochs + 1):
         if epoch > args.warm:
             train_scheduler.step(epoch)
 
