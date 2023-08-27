@@ -22,12 +22,14 @@ sys.path.append(os.path.join('..', '..', 'utils'))
 sys.path.append(os.path.join('..', '..'))
 
 from conf import global_settings as settings
-from utils_train import get_network, get_test_dataloader, get_test_dataloader_permuted
+from utils_train import get_network, dataset_loader
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-net', type=str, required=True, help='net type')
+    parser.add_argument('-dataset', type=str, help='dataset used for training')
+    parser.add_argument('-permute', action='store_true', default=False, help='permute test data or not')
     parser.add_argument('-weights', type=str, required=True, help='the weights file you want to test')
     parser.add_argument('-gpu', action='store_true', default=False, help='use gpu or not')
     parser.add_argument('-b', type=int, default=16, help='batch size for dataloader')
@@ -35,14 +37,19 @@ if __name__ == '__main__':
 
     net = get_network(args)
 
-    cifar100_test_loader = get_test_dataloader_permuted(
-        settings.CIFAR100_TRAIN_MEAN,
-        settings.CIFAR100_TRAIN_STD,
-        #settings.CIFAR100_PATH,
+    mean = settings.CIFAR100_TRAIN_MEAN if args.dataset == 'cifar100' else settings.CIFAR10_TRAIN_MEAN
+    std = settings.CIFAR100_TRAIN_STD if args.dataset == 'cifar100' else settings.CIFAR10_TRAIN_STD
+
+
+    _, test_loader, perm = dataset_loader(
+        args.dataset,
+        mean,
+        std,
         num_workers=4,
         batch_size=args.b,
+        shuffle=True,
+        shuffle_pixels = args.permute
     )
-
     net.load_state_dict(torch.load(args.weights))
     print(net)
     net.eval()
@@ -53,8 +60,8 @@ if __name__ == '__main__':
     correct = 0.0
 
     with torch.no_grad():
-        for n_iter, (image, label) in enumerate(cifar100_test_loader):
-            print("iteration: {}\ttotal {} iterations".format(n_iter + 1, len(cifar100_test_loader)))
+        for n_iter, (image, label) in enumerate(test_loader):
+            print("iteration: {}\ttotal {} iterations".format(n_iter + 1, len(test_loader)))
 
             if args.gpu:
                 image = image.cuda()
@@ -80,7 +87,7 @@ if __name__ == '__main__':
         print(torch.cuda.memory_summary(), end='')
 
     print()
-    print("Top 1 err: ", 1 - correct_1 / len(cifar100_test_loader.dataset))
-    print("Top 5 err: ", 1 - correct_5 / len(cifar100_test_loader.dataset))
-    print("Acc err: ", correct.float() / len(cifar100_test_loader.dataset))
+    print("Top 1 err: ", 1 - correct_1 / len(test_loader.dataset))
+    print("Top 5 err: ", 1 - correct_5 / len(test_loader.dataset))
+    print("Acc err: ", correct.float() / len(test_loader.dataset))
     print("Parameter numbers: {}".format(sum(p.numel() for p in net.parameters())))

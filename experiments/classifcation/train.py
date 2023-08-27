@@ -216,7 +216,7 @@ if __name__ == '__main__':
         print('loading weights file {} to resume training.....'.format(weights_path))
         net.load_state_dict(torch.load(weights_path))
 
-        resume_epoch = 1
+        resume_epoch = 0
 
 
     for epoch in range(1, args.epochs + 1):
