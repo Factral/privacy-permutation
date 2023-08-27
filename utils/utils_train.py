@@ -74,6 +74,40 @@ def get_training_dataloader(mean, std, batch_size=16, num_workers=2, shuffle=Tru
 
     return cifar100_training_loader
 
+
+def get_training_dataloader_permuted(mean, std, batch_size=16, num_workers=2, shuffle=True):
+    """ return training dataloader
+    Args:
+        mean: mean of cifar100 training dataset
+        std: std of cifar100 training dataset
+        path: path to cifar100 training python dataset
+        batch_size: dataloader batchsize
+        num_workers: dataloader num_works
+        shuffle: whether to shuffle
+    Returns: train_data_loader:torch dataloader object
+    """
+    perm = utils.Permutar(32,1)
+
+    transform_train = transforms.Compose([
+        #transforms.ToPILImage(),
+        #transforms.RandomRotation(15),
+        transforms.ToTensor(),
+        transforms.Normalize(mean, std)
+    ])
+    #cifar100_training = CIFAR100Train(path, transform=transform_train)
+    cifar100_training = torchvision.datasets.CIFAR100(root='./data', train=True, download=True, transform=transform_train)
+    fake_loader = torch.utils.data.DataLoader(cifar100_training, batch_size=len(cifar100_training), shuffle=False,drop_last=True)
+    a = list(fake_loader)
+    b = perm.desordenar(a[0][0])
+    cifar100_train_shuffled = torch.utils.data.TensorDataset(b,a[0][1])
+    
+    
+    cifar100_training_loader = DataLoader(
+        cifar100_train_shuffled, shuffle=shuffle, num_workers=num_workers, batch_size=batch_size)
+
+    return cifar100_training_loader
+
+
 def get_test_dataloader(mean, std, batch_size=16, num_workers=2, shuffle=True):
     """ return training dataloader
     Args:

@@ -29,7 +29,7 @@ sys.path.append(os.path.join('..', '..'))
 
 from conf import global_settings as settings
 from utils_train import get_network, get_training_dataloader, get_test_dataloader, WarmUpLR, \
-    most_recent_folder, most_recent_weights, last_epoch, best_acc_weights
+    most_recent_folder, most_recent_weights, last_epoch, best_acc_weights, get_training_dataloader_permuted, get_test_dataloader_permuted
 
 
 def train(epoch):
@@ -137,10 +137,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-net', type=str, required=True, help='net type')
     parser.add_argument('-gpu', action='store_true', default=False, help='use gpu or not')
+    parser.add_argument('-permute', action='store_true', default=False, help='permute train data or not')
     parser.add_argument('-b', type=int, default=128, help='batch size for dataloader')
     parser.add_argument('-warm', type=int, default=1, help='warm up training phase')
     parser.add_argument('-lr', type=float, default=0.1, help='initial learning rate')
     parser.add_argument('-resume', action='store_true', default=False, help='resume training')
+    parser.add_argument('-save_weights', action='store_true', default=False, help='resume training')
+
     args = parser.parse_args()
 
     ## establishing connection to wandb ...
@@ -151,16 +154,23 @@ if __name__ == '__main__':
                 "batch_size": args.b,
                 #"log_step": 200,
                 #"val_log_step": 50,
-                "architecture": "Medical (segmentation)"
+                "architecture": "normal VGG16 FINETUNED"
             }
 
     wandb.init(project="privacy shuffling", config=config, reinit=True)
 
-
     net = get_network(args)
 
+    if args.permute:
+        train_loader = get_training_dataloader_permuted
+        test_loader = get_test_dataloader_permuted
+    else:
+        train_loader = get_training_dataloader
+        test_loader = get_test_dataloader
+
+
     #data preprocessing:
-    cifar100_training_loader = get_training_dataloader(
+    cifar100_training_loader = train_loader(
         settings.CIFAR100_TRAIN_MEAN,
         settings.CIFAR100_TRAIN_STD,
         num_workers=4,
@@ -168,7 +178,7 @@ if __name__ == '__main__':
         shuffle=True
     )
 
-    cifar100_test_loader = get_test_dataloader(
+    cifar100_test_loader = test_loader(
         settings.CIFAR100_TRAIN_MEAN,
         settings.CIFAR100_TRAIN_STD,
         num_workers=4,
@@ -179,8 +189,9 @@ if __name__ == '__main__':
     loss_function = nn.CrossEntropyLoss()
     if args.gpu:
         loss_function = loss_function.cuda()
-
-    optimizer = optim.Adam(net.parameters(), lr=args.lr, weight_decay=1e-8)
+    
+    #optimizer = optim.Adam(net.parameters(), lr=args.lr, weight_decay=1e-8)
+    optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
     train_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=settings.MILESTONES, gamma=0.2) #learning rate decay
     iter_per_epoch = len(cifar100_training_loader)
@@ -252,13 +263,15 @@ if __name__ == '__main__':
         if epoch > settings.MILESTONES[1] and best_acc < acc:
             weights_path = checkpoint_path.format(net=args.net, epoch=epoch, type='best')
             print('saving weights file to {}'.format(weights_path))
-            torch.save(net.state_dict(), weights_path)
+            if args.save_weights:
+                torch.save(net.state_dict(), weights_path)
             best_acc = acc
             continue
 
         if not epoch % settings.SAVE_EPOCH:
             weights_path = checkpoint_path.format(net=args.net, epoch=epoch, type='regular')
             print('saving weights file to {}'.format(weights_path))
-            torch.save(net.state_dict(), weights_path)
+            if args.save_weights:
+                torch.save(net.state_dict(), weights_path)
 
 #    writer.close()
