@@ -84,7 +84,8 @@ def train(epoch):
 
 @torch.no_grad()
 def eval_training(epoch=0, tb=True):
-
+    global loss_item
+    
     start = time.time()
     net.eval()
 
