@@ -18,9 +18,8 @@ cfg = {
 
 class VGG(nn.Module):
 
-    def __init__(self, features, num_class=100):
+    def __init__(self, num_class=100):
         super().__init__()
-        self.features = features
 
         # conv1
         self.conv1 =  nn.Conv2d(3, 64, 3, padding=1)
@@ -116,25 +115,5 @@ class VGG(nn.Module):
         return output
 
 
-def make_layers(cfg, batch_norm=False):
-    layers = []
-
-    input_channel = 3
-    for l in cfg:
-        if l == 'M':
-            layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
-            continue
-
-        layers += [nn.Conv2d(input_channel, l, kernel_size=3, padding=1)]
-
-        if batch_norm:
-            layers += [nn.BatchNorm2d(l)]
-
-        layers += [nn.ReLU(inplace=True)]
-        input_channel = l
-
-    return nn.Sequential(*layers)
-
-
 def vgg16_bn():
-    return VGG(make_layers(cfg['D'], batch_norm=True))
+    return VGG()
