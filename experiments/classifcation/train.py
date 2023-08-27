@@ -30,6 +30,7 @@ sys.path.append(os.path.join('..', '..'))
 from conf import global_settings as settings
 from utils_train import dataset_loader, get_network, WarmUpLR, \
     most_recent_folder, most_recent_weights, last_epoch, best_acc_weights
+import utils
 
 
 def train(epoch):
@@ -137,8 +138,12 @@ if __name__ == '__main__':
     parser.add_argument('-load_weights', action='store_true', default=False, help='load weights for finetuning')
     parser.add_argument('-gpu', action='store_true', default=False, help='use gpu or not')
     parser.add_argument('-save_weights', action='store_true', default=False, help='resume training')
+    parser.add_argument('-seed', type=int, help='resume training')
 
     args = parser.parse_args()
+
+    if args.seed:
+        utils.setup_seed(args.seed)
 
     ## establishing connection to wandb ...
     wandb.login(key='fe0119224af6709c85541483adf824cec731879e')

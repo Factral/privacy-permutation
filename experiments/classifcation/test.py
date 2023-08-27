@@ -23,6 +23,7 @@ sys.path.append(os.path.join('..', '..'))
 
 from conf import global_settings as settings
 from utils_train import get_network, dataset_loader
+import utils
 
 if __name__ == '__main__':
 
@@ -33,6 +34,7 @@ if __name__ == '__main__':
     parser.add_argument('-weights', type=str, required=True, help='the weights file you want to test')
     parser.add_argument('-gpu', action='store_true', default=False, help='use gpu or not')
     parser.add_argument('-b', type=int, default=16, help='batch size for dataloader')
+    parser.add_argument('-seed', type=int, help='resume training')
     args = parser.parse_args()
 
     net = get_network(args)
@@ -40,6 +42,8 @@ if __name__ == '__main__':
     mean = settings.CIFAR100_TRAIN_MEAN if args.dataset == 'cifar100' else settings.CIFAR10_TRAIN_MEAN
     std = settings.CIFAR100_TRAIN_STD if args.dataset == 'cifar100' else settings.CIFAR10_TRAIN_STD
 
+    if args.seed:
+        utils.setup_seed(args.seed)
 
     _, test_loader, perm = dataset_loader(
         args.dataset,
@@ -58,6 +62,8 @@ if __name__ == '__main__':
     correct_5 = 0.0
     total = 0
     correct = 0.0
+
+
 
     with torch.no_grad():
         for n_iter, (image, label) in enumerate(test_loader):
