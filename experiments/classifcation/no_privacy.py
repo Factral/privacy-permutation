@@ -28,7 +28,7 @@ sys.path.append(os.path.join('..', '..', 'utils'))
 sys.path.append(os.path.join('..', '..'))
 
 from conf import global_settings as settings
-from utils_train import get_network, get_training_dataloader, get_test_dataloader, WarmUpLR, \
+from utils_train import dataset_loader, get_network, get_training_dataloader, get_test_dataloader, WarmUpLR, \
     most_recent_folder, most_recent_weights, last_epoch, best_acc_weights, get_training_dataloader_permuted, get_test_dataloader_permuted
 
 
@@ -36,7 +36,7 @@ def train(epoch):
 
     start = time.time()
     net.train()
-    for batch_index, (images, labels) in enumerate(cifar100_training_loader):
+    for batch_index, (images, labels) in enumerate(training_loader):
 
         if args.gpu:
             labels = labels.cuda()
@@ -48,7 +48,7 @@ def train(epoch):
         loss.backward()
         optimizer.step()
 
-        n_iter = (epoch - 1) * len(cifar100_training_loader) + batch_index + 1
+        n_iter = (epoch - 1) * len(training_loader) + batch_index + 1
 
         last_layer = list(net.children())[-1]
         #for name, para in last_layer.named_parameters():
@@ -62,7 +62,7 @@ def train(epoch):
             optimizer.param_groups[0]['lr'],
             epoch=epoch,
             trained_samples=batch_index * args.b + len(images),
-            total_samples=len(cifar100_training_loader.dataset)
+            total_samples=len(training_loader.dataset)
         ))
 
         #update training loss for each iteration
@@ -92,7 +92,7 @@ def eval_training(epoch=0, tb=True):
     test_loss = 0.0 # cost function error
     correct = 0.0
 
-    for (images, labels) in cifar100_test_loader:
+    for (images, labels) in test_loader:
 
         if args.gpu:
             images = images.cuda()
@@ -112,8 +112,8 @@ def eval_training(epoch=0, tb=True):
     print('Evaluating Network.....')
     print('Test set: Epoch: {}, Average loss: {:.4f}, Accuracy: {:.4f}, Time consumed:{:.2f}s'.format(
         epoch,
-        test_loss / len(cifar100_test_loader.dataset),
-        correct.float() / len(cifar100_test_loader.dataset),
+        test_loss / len(test_loader.dataset),
+        correct.float() / len(test_loader.dataset),
         finish - start
     ))
     print()
@@ -122,25 +122,20 @@ def eval_training(epoch=0, tb=True):
         wandb.log({'epochs': epoch,
                 '(train) Total loss': loss_item,
                 'LR': optimizer.param_groups[0]['lr'],
-                '(test) Metric loss': test_loss / len(cifar100_test_loader.dataset),
-                '(test) Accuracy': correct.float() / len(cifar100_test_loader.dataset)
+                '(test) Metric loss': test_loss / len(test_loader.dataset),
+                '(test) Accuracy': correct.float() / len(test_loader.dataset)
                 #'(test) Metric loss': loss_ce_test / len(dataloader_test)
              })
     except:
                 wandb.log({'epochs': epoch,
                 '(train) Total loss': 0,
                 'LR': optimizer.param_groups[0]['lr'],
-                '(test) Metric loss': test_loss / len(cifar100_test_loader.dataset),
-                '(test) Accuracy': correct.float() / len(cifar100_test_loader.dataset)
+                '(test) Metric loss': test_loss / len(test_loader.dataset),
+                '(test) Accuracy': correct.float() / len(test_loader.dataset)
                 #'(test) Metric loss': loss_ce_test / len(dataloader_test)
              })
 
-    #add informations to tensorboard
-    #if tb:
-    #    writer.add_scalar('Test/Average loss', test_loss / len(cifar100_test_loader.dataset), epoch)
-    #    writer.add_scalar('Test/Accuracy', correct.float() / len(cifar100_test_loader.dataset), epoch)
-
-    return correct.float() / len(cifar100_test_loader.dataset)
+    return correct.float() / len(test_loader.dataset)
 
 if __name__ == '__main__':
 
@@ -171,29 +166,13 @@ if __name__ == '__main__':
 
     net = get_network(args)
 
-    if args.permute:
-        train_loader = get_training_dataloader_permuted
-        test_loader = get_test_dataloader_permuted
-    else:
-        train_loader = get_training_dataloader
-        test_loader = get_test_dataloader
-
-
-    #data preprocessing:
-    cifar100_training_loader = train_loader(
+    training_loader, test_loader = dataset_loader(
         settings.CIFAR100_TRAIN_MEAN,
         settings.CIFAR100_TRAIN_STD,
         num_workers=4,
         batch_size=args.b,
-        shuffle=True
-    )
-
-    cifar100_test_loader = test_loader(
-        settings.CIFAR100_TRAIN_MEAN,
-        settings.CIFAR100_TRAIN_STD,
-        num_workers=4,
-        batch_size=args.b,
-        shuffle=True
+        shuffle=True,
+        shuffle_pixels = args.permute
     )
 
     loss_function = nn.CrossEntropyLoss()
@@ -204,7 +183,7 @@ if __name__ == '__main__':
     optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
     train_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=settings.MILESTONES, gamma=0.2) #learning rate decay
-    iter_per_epoch = len(cifar100_training_loader)
+    iter_per_epoch = len(training_loader)
     warmup_scheduler = WarmUpLR(optimizer, iter_per_epoch * args.warm)
 
     if args.resume:

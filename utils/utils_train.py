@@ -47,139 +47,63 @@ def get_network(args):
     return net
 
 
-def get_training_dataloader(mean, std, batch_size=16, num_workers=2, shuffle=True):
-    """ return training dataloader
+def dataset_loader(type, mean,std,batch_size,num_workers,shuffle, shuffle_pixels ):
+    """ return training dataloader 
     Args:
-        mean: mean of cifar100 training dataset
-        std: std of cifar100 training dataset
-        path: path to cifar100 training python dataset
+        type: type of dataset cifar10 or cifar100
+        mean: mean of dataset
+        std: std of dataset
         batch_size: dataloader batchsize
         num_workers: dataloader num_works
         shuffle: whether to shuffle
-    Returns: train_data_loader:torch dataloader object
+        shuffle_pixels: whether to shuffle pixels
     """
+    transform_data_aug = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            #transforms.CenterCrop(32),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(15),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ])
+    transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ])
 
-    transform_train = transforms.Compose([
-        #transforms.ToPILImage(),
-        transforms.RandomCrop(32, padding=4),
-        transforms.CenterCrop(32),
-        transforms.RandomHorizontalFlip(),
-        #transforms.RandomRotation(15),
-        transforms.ToTensor(),
-        transforms.Normalize(mean, std)
-    ])
-    #cifar100_training = CIFAR100Train(path, transform=transform_train)
-    cifar100_training = torchvision.datasets.CIFAR100(root='./data', train=True, download=True, transform=transform_train)
-    cifar100_training_loader = DataLoader(
-        cifar100_training, shuffle=shuffle, num_workers=num_workers, batch_size=batch_size)
+    dataset  = {
+        'cifar10': torchvision.datasets.CIFAR10,
+        'cifar100': torchvision.datasets.CIFAR100
+    }
 
-    return cifar100_training_loader
+    try:
+        loader = dataset[type]
+    except:
+        print('the dataset name you have entered is not supported yet')
+        sys.exit()
 
+    train_transform = transform_data_aug if not shuffle_pixels else transform
 
-def get_training_dataloader_permuted(mean, std, batch_size=16, num_workers=2, shuffle=True):
-    """ return training dataloader
-    Args:
-        mean: mean of cifar100 training dataset
-        std: std of cifar100 training dataset
-        path: path to cifar100 training python dataset
-        batch_size: dataloader batchsize
-        num_workers: dataloader num_works
-        shuffle: whether to shuffle
-    Returns: train_data_loader:torch dataloader object
-    """
-    global perm
+    trainset = loader(root='./data', train=True, download=True, transform=train_transform)
+    testset = loader(root='./data', train=False, download=True, transform=transform)
 
-    transform_train = transforms.Compose([
-        #transforms.ToPILImage(),
-        #transforms.RandomRotation(15),
-        transforms.ToTensor(),
-        transforms.Normalize(mean, std)
-    ])
-    #cifar100_training = CIFAR100Train(path, transform=transform_train)
-    cifar100_training = torchvision.datasets.CIFAR100(root='./data', train=True, download=True, transform=transform_train)
-    fake_loader = torch.utils.data.DataLoader(cifar100_training, batch_size=len(cifar100_training), shuffle=False,drop_last=True)
-    a = list(fake_loader)
-    print(np.array(a[0][0]).shape)
-    b = perm.desordenar(a[0][0])
-    cifar100_train_shuffled = torch.utils.data.TensorDataset(b,a[0][1])
+    if shuffle_pixels:
+        #train
+        fake_loader = torch.utils.data.DataLoader(trainset, batch_size=len(trainset), shuffle=False, drop_last=True)
+        a = list(fake_loader)
+        b = perm.desordenar(a[0][0])
+        trainset = torch.utils.data.TensorDataset(b,a[0][1])
+        #test
+        fake_loader = torch.utils.data.DataLoader(testset, batch_size=len(testset), shuffle=False, drop_last=True)
+        a = list(fake_loader)
+        b = perm.desordenar(a[0][0])
+        testset = torch.utils.data.TensorDataset(b,a[0][1])
     
-    
-    cifar100_training_loader = DataLoader(
-        cifar100_train_shuffled, shuffle=False, num_workers=num_workers, batch_size=batch_size)
+    trainloader = DataLoader(trainset, shuffle=shuffle, num_workers=num_workers, batch_size=batch_size)
+    testloader = DataLoader(testset, shuffle=shuffle, num_workers=num_workers, batch_size=batch_size)
 
-    return cifar100_training_loader
+    return trainloader, testloader
 
-
-def get_test_dataloader(mean, std, batch_size=16, num_workers=2, shuffle=True):
-    """ return training dataloader
-    Args:
-        mean: mean of cifar100 test dataset
-        std: std of cifar100 test dataset
-        path: path to cifar100 test python dataset
-        batch_size: dataloader batchsize
-        num_workers: dataloader num_works
-        shuffle: whether to shuffle
-    Returns: cifar100_test_loader:torch dataloader object
-    """
-
-    transform_test = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean, std)
-    ])
-    #cifar100_test = CIFAR100Test(path, transform=transform_test)
-    cifar100_test = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_test)
-    cifar100_test_loader = DataLoader(
-        cifar100_test, shuffle=shuffle, num_workers=num_workers, batch_size=batch_size)
-
-    return cifar100_test_loader
-
-def get_test_dataloader_permuted(mean, std, batch_size=16, num_workers=2, shuffle=True):
-    """ return training dataloader
-    Args:
-        mean: mean of cifar100 test dataset
-        std: std of cifar100 test dataset
-        path: path to cifar100 test python dataset
-        batch_size: dataloader batchsize
-        num_workers: dataloader num_works
-        shuffle: whether to shuffle
-    Returns: cifar100_test_loader:torch dataloader object
-    """
-    global perm
-
-    transform_test = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean, std)
-    ])
-
-    #cifar100_test = CIFAR100Test(path, transform=transform_test)
-    cifar100_test = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_test)
-    fake_loader = torch.utils.data.DataLoader(cifar100_test, batch_size=len(cifar100_test), shuffle=False,drop_last=True)
-    a = list(fake_loader)
-    b = perm.desordenar(a[0][0])
-    cifar100_test_shuffled = torch.utils.data.TensorDataset(b,a[0][1])
-    
-    cifar100_test_loader = DataLoader(
-        cifar100_test_shuffled, shuffle=shuffle, num_workers=num_workers, batch_size=batch_size)
-
-    return cifar100_test_loader
-
-def compute_mean_std(cifar100_dataset):
-    """compute the mean and std of cifar100 dataset
-    Args:
-        cifar100_training_dataset or cifar100_test_dataset
-        witch derived from class torch.utils.data
-
-    Returns:
-        a tuple contains mean, std value of entire dataset
-    """
-
-    data_r = numpy.dstack([cifar100_dataset[i][1][:, :, 0] for i in range(len(cifar100_dataset))])
-    data_g = numpy.dstack([cifar100_dataset[i][1][:, :, 1] for i in range(len(cifar100_dataset))])
-    data_b = numpy.dstack([cifar100_dataset[i][1][:, :, 2] for i in range(len(cifar100_dataset))])
-    mean = numpy.mean(data_r), numpy.mean(data_g), numpy.mean(data_b)
-    std = numpy.std(data_r), numpy.std(data_g), numpy.std(data_b)
-
-    return mean, std
 
 class WarmUpLR(_LRScheduler):
     """warmup_training learning rate scheduler
