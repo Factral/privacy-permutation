@@ -257,6 +257,7 @@ if __name__ == '__main__':
 
         resume_epoch = last_epoch(os.path.join(settings.CHECKPOINT_PATH, args.net, recent_folder))
         print('resume training start epoch {}'.format(resume_epoch))
+        resume_epoch = 1
 
 
     for epoch in range(1, settings.EPOCH + 1):
