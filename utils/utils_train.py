@@ -28,6 +28,9 @@ def get_network(args):
     if args.net == 'vgg16':
         from models.vgg import vgg16_bn
         net = vgg16_bn()
+    elif args.net == 'vgg16_permuted':
+        from models.vgg_permuted import VGG_permuted
+        net = VGG_permuted(perm, args.b)
     else:
         print('the network name you have entered is not supported yet')
         sys.exit()
