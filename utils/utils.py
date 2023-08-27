@@ -187,7 +187,8 @@ class DeformMaxPool2d(nn.Module):
                  perm,
                  kernel_size,
                  stride=None,
-                 padding=0) -> None:
+                 padding=0,
+                 disorder=True) -> None:
         super(DeformMaxPool2d, self).__init__()
 
         self.perm = perm
@@ -205,7 +206,10 @@ class DeformMaxPool2d(nn.Module):
         self.index_positions = calculate_index_pool(dim, self.stride, self.padding, self.kernel_size)
         self.index_positions = np.transpose(self.index_positions, (2, 0, 1))
 
-        self.index_positions_ = self.new_perm.desordenar(torch.from_numpy(self.index_positions).unsqueeze(0)).squeeze(0).numpy()
+        if disorder:
+            self.index_positions_ = self.new_perm.desordenar(torch.from_numpy(self.index_positions).unsqueeze(0)).squeeze(0).numpy()
+        else:
+            self.index_positions_ = self.index_positions
 
     def forward(self, x):
         batch_size, channels, height, width = x.shape

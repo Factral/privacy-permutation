@@ -108,6 +108,7 @@ class VGG(nn.Module):
         x = self.conv13(x)
         output = self.pool(torch.relu(self.bcn13(x)))
 
+        torch.save(output, 'output.pt')
 
         output = output.view(output.size()[0], -1)
         output = self.classifier(output)

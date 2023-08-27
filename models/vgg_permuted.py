@@ -83,7 +83,7 @@ class VGG_permuted(nn.Module):
         self.conv13 = DeformConv2d(512, 512, 3, padding=1)
         self.offset_13, perm_13 = utils.calculate_offset(self.offset_12.shape[-1], 1, 1, 3, perm_12, batch)
         self.bcn13 = nn.BatchNorm2d(512)
-        self.pool5 = utils.DeformMaxPool2d(self.offset_13.shape[-1], perm_13, 2)
+        self.pool5 = utils.DeformMaxPool2d(self.offset_13.shape[-1], perm_13, 2, disorder=False)
 
         #self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
@@ -136,7 +136,9 @@ class VGG_permuted(nn.Module):
         x = self.conv13(x, self.offset_13)
         output = self.pool5(torch.relu(self.bcn13(x)))
 
-        output = self.pool5.new_perm.ordenar(output.squeeze(0)) #order latent space
+        #output = self.pool5.new_perm.ordenar(output) #order latent space
+
+        torch.save(output, 'output_deformed.pt')
 
         output = output.view(output.size()[0], -1)
         output = self.classifier(output)

@@ -83,12 +83,12 @@ def dataset_loader(type, mean,std,batch_size,num_workers,shuffle, shuffle_pixels
 
     if shuffle_pixels:
         #train
-        fake_loader = torch.utils.data.DataLoader(trainset, batch_size=len(trainset), shuffle=False, drop_last=True)
+        fake_loader = torch.utils.data.DataLoader(trainset, batch_size=len(trainset), shuffle=False)
         a = list(fake_loader)
         b = permkey.desordenar(a[0][0]) if permkey is not None else perm.desordenar(a[0][0])
         trainset = torch.utils.data.TensorDataset(b,a[0][1])
         #test
-        fake_loader = torch.utils.data.DataLoader(testset, batch_size=len(testset), shuffle=False, drop_last=True)
+        fake_loader = torch.utils.data.DataLoader(testset, batch_size=len(testset), shuffle=False)
         a = list(fake_loader)
         b = permkey.desordenar(a[0][0]) if permkey is not None else perm.desordenar(a[0][0])
         testset = torch.utils.data.TensorDataset(b,a[0][1])
