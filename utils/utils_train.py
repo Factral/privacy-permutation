@@ -19,6 +19,7 @@ import utils
 
 sys.path.append(os.path.join('..'))
 
+perm = utils.Permutar(32,1)
 
 def get_network(args):
     """ return given network
@@ -86,7 +87,7 @@ def get_training_dataloader_permuted(mean, std, batch_size=16, num_workers=2, sh
         shuffle: whether to shuffle
     Returns: train_data_loader:torch dataloader object
     """
-    perm = utils.Permutar(32,1)
+    global perm
 
     transform_train = transforms.Compose([
         #transforms.ToPILImage(),
@@ -143,7 +144,7 @@ def get_test_dataloader_permuted(mean, std, batch_size=16, num_workers=2, shuffl
         shuffle: whether to shuffle
     Returns: cifar100_test_loader:torch dataloader object
     """
-    perm = utils.Permutar(32,1)
+    global perm
 
     transform_test = transforms.Compose([
         transforms.ToTensor(),
