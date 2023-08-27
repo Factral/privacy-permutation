@@ -37,26 +37,26 @@ if __name__ == '__main__':
     parser.add_argument('-seed', type=int, help='resume training')
     args = parser.parse_args()
 
-    net = get_network(args)
+    if args.seed:
+        utils.setup_seed(args.seed)
+
+    perm = utils.Permutar(32,1)
+
+    net = get_network(args,perm)
 
     mean = settings.CIFAR100_TRAIN_MEAN if args.dataset == 'cifar100' else settings.CIFAR10_TRAIN_MEAN
     std = settings.CIFAR100_TRAIN_STD if args.dataset == 'cifar100' else settings.CIFAR10_TRAIN_STD
 
-    if args.seed:
-        utils.setup_seed(args.seed)
-
-    _, test_loader, perm = dataset_loader(
+    _, test_loader, _ = dataset_loader(
         args.dataset,
         mean,
         std,
         num_workers=4,
         batch_size=args.b,
         shuffle=True,
-        shuffle_pixels = args.permute
+        shuffle_pixels = args.permute,
+        permkey = perm
     )
-
-    if args.gpu:
-        net = net.cuda()
 
     net.load_state_dict(torch.load(args.weights))
     print(net)

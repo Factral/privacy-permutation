@@ -21,7 +21,7 @@ sys.path.append(os.path.join('..'))
 
 perm = utils.Permutar(32,1)
 
-def get_network(args):
+def get_network(args, permkey=None):
     """ return given network
     """
 
@@ -30,7 +30,7 @@ def get_network(args):
         net = vgg16_bn()
     elif args.net == 'vgg16_permuted':
         from models.vgg_permuted import VGG_permuted
-        net = VGG_permuted(perm, args.b)
+        net = VGG_permuted(permkey, args.b)
     else:
         print('the network name you have entered is not supported yet')
         sys.exit()
@@ -41,7 +41,7 @@ def get_network(args):
     return net
 
 
-def dataset_loader(type, mean,std,batch_size,num_workers,shuffle, shuffle_pixels ):
+def dataset_loader(type, mean,std,batch_size,num_workers,shuffle, shuffle_pixels, permkey=None ):
     """ return training dataloader 
     Args:
         type: type of dataset cifar10 or cifar100
@@ -85,16 +85,18 @@ def dataset_loader(type, mean,std,batch_size,num_workers,shuffle, shuffle_pixels
         #train
         fake_loader = torch.utils.data.DataLoader(trainset, batch_size=len(trainset), shuffle=False, drop_last=True)
         a = list(fake_loader)
-        b = perm.desordenar(a[0][0])
+        b = permkey.desordenar(a[0][0]) if permkey is not None else perm.desordenar(a[0][0])
         trainset = torch.utils.data.TensorDataset(b,a[0][1])
         #test
         fake_loader = torch.utils.data.DataLoader(testset, batch_size=len(testset), shuffle=False, drop_last=True)
         a = list(fake_loader)
-        b = perm.desordenar(a[0][0])
+        b = permkey.desordenar(a[0][0]) if permkey is not None else perm.desordenar(a[0][0])
         testset = torch.utils.data.TensorDataset(b,a[0][1])
     
     trainloader = DataLoader(trainset, shuffle=shuffle, num_workers=num_workers, batch_size=batch_size)
     testloader = DataLoader(testset, shuffle=shuffle, num_workers=num_workers, batch_size=batch_size)
+
+    perm = permkey if permkey is not None else perm
 
     return trainloader, testloader, perm
 
