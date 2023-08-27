@@ -14,7 +14,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
-
+import numpy as np 
 import utils
 
 sys.path.append(os.path.join('..'))
@@ -98,6 +98,7 @@ def get_training_dataloader_permuted(mean, std, batch_size=16, num_workers=2, sh
     cifar100_training = torchvision.datasets.CIFAR100(root='./data', train=True, download=True, transform=transform_train)
     fake_loader = torch.utils.data.DataLoader(cifar100_training, batch_size=len(cifar100_training), shuffle=False,drop_last=True)
     a = list(fake_loader)
+    print(np.array(a[0][0]).shape)
     b = perm.desordenar(a[0][0])
     cifar100_train_shuffled = torch.utils.data.TensorDataset(b,a[0][1])
     
