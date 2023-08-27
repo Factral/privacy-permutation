@@ -52,7 +52,7 @@ class VGG(nn.Module):
         self.offset_12, perm_12 = utils.calculate_offset(self.offset_11.shape[-1], 1, 1, 3, perm_11)
         conv13 = nn.Conv2d(512, 512, 3, padding=1)
         self.offset_13, self.perm_13 = utils.calculate_offset(self.offset_12.shape[-1], 1, 1, 3, perm_12)
-      
+        print(self.offset_13.shape)
 
         self.classifier = nn.Sequential(
             nn.Linear(512, 4096),
