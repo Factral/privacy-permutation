@@ -22,7 +22,6 @@ CIFAR10_TRAIN_STD = (0.24703223, 0.24348513, 0.26158784)
 CHECKPOINT_PATH = './../../../drive/MyDrive/privacy_shuffling/checkpoint'
  
 #total training epoches
-EPOCH = 100
 MILESTONES = [60, 120, 160]
 
 #initial learning rate

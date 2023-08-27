@@ -3,6 +3,7 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import torch.nn as nn
 
 
 class Permutar():
@@ -178,26 +179,75 @@ def retrieve_original_pixels(positions,perm):
     pix_pos.append(fake_pos.squeeze())
   return pix_pos
 
-def deform_maxPool2d(input,perm,kernel_size,stride=None,padding=0):
-    dims = input.shape[-1]
+
+
+class DeformMaxPool2d(nn.Module):
+    def __init__(self,
+                 dim,
+                 perm,
+                 kernel_size,
+                 stride=None,
+                 padding=0) -> None:
+        super(DeformMaxPool2d, self).__init__()
+
+        self.perm = perm
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        self.dim = dim
+
+        if stride is None:
+            self.stride = kernel_size
+
+        self.output_dims = (dim + 2 * padding - (kernel_size - 1) - 1) // self.stride + 1
+        self.new_perm = Permutar(self.output_dims, 1)
+
+        self.index_positions = calculate_index_pool(dim, self.stride, self.padding, self.kernel_size)
+        self.index_positions = np.transpose(self.index_positions, (2, 0, 1))
+
+        self.index_positions_ = self.new_perm.desordenar(torch.from_numpy(self.index_positions).unsqueeze(0)).squeeze(0).numpy()
+
+    def forward(self, x):
+        batch_size, channels, height, width = x.shape
+
+        result = torch.zeros(batch_size, channels, self.output_dims, self.output_dims)
+
+        for i in range(self.output_dims):
+            for j in range(self.output_dims):
+                positions = get_index_pool(self.index_positions_[:, i, j], self.kernel_size)
+                org_position = retrieve_original_pixels(positions, self.perm)
+                pixels = get_pixels_from_coordinates(x, org_position)
+                result[:, :, i, j] = torch.amax(pixels, 2)
+
+        return result
+
+
+
+
+def deform_maxPool2d(dim,perm,kernel_size,stride=None,padding=0):
+    dims = dim
 
     if stride is None:
         stride = kernel_size
 
     output_dims = (dims + 2 * padding - (kernel_size - 1) - 1) // stride + 1
+    new_perm = Permutar(output_dims, 1)
 
     index_positions = calculate_index_pool(dims,stride,padding,kernel_size)
+
     index_positions = np.transpose(index_positions, (2, 0, 1))
         
+    index_positions_ = new_perm.desordenar(torch.from_numpy(index_positions).unsqueeze(0)).squeeze(0).numpy()
+
     batch_size, channels, height, width = input.shape
 
     result = torch.zeros(batch_size,channels,output_dims,output_dims)
 
     for i in range(output_dims):
         for j in range(output_dims):
-            positions = get_index_pool(index_positions[:, i, j], kernel_size)
+            positions = get_index_pool(index_positions_[:, i, j], kernel_size)
             org_position = retrieve_original_pixels(positions,perm)
             pixels = get_pixels_from_coordinates(input, org_position)
-            result[:,:,i,j] = torch.amax(pixels,2)
+            result[:,:,i,j] = torch.amax(pixels, 2)
 
-    return result
+    return result, new_perm
