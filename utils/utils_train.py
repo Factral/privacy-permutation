@@ -102,7 +102,7 @@ def dataset_loader(type, mean,std,batch_size,num_workers,shuffle, shuffle_pixels
     trainloader = DataLoader(trainset, shuffle=shuffle, num_workers=num_workers, batch_size=batch_size)
     testloader = DataLoader(testset, shuffle=shuffle, num_workers=num_workers, batch_size=batch_size)
 
-    return trainloader, testloader
+    return trainloader, testloader, perm
 
 
 class WarmUpLR(_LRScheduler):

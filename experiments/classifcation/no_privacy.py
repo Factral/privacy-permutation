@@ -148,6 +148,7 @@ if __name__ == '__main__':
     parser.add_argument('-lr', type=float, default=0.1, help='initial learning rate')
     parser.add_argument('-resume', action='store_true', default=False, help='resume training')
     parser.add_argument('-save_weights', action='store_true', default=False, help='resume training')
+    parser.add_argument('-dataset', type=str, help='dataset used for training')
 
     args = parser.parse_args()
 
@@ -157,8 +158,6 @@ if __name__ == '__main__':
                 "learning_rate": args.lr,
                 "epochs": settings.EPOCH,
                 "batch_size": args.b,
-                #"log_step": 200,
-                #"val_log_step": 50,
                 "architecture": "normal VGG16 FINETUNED"
             }
 
@@ -166,9 +165,13 @@ if __name__ == '__main__':
 
     net = get_network(args)
 
-    training_loader, test_loader = dataset_loader(
-        settings.CIFAR100_TRAIN_MEAN,
-        settings.CIFAR100_TRAIN_STD,
+    mean = settings.CIFAR100_TRAIN_MEAN if args.dataset == 'cifar100' else settings.CIFAR10_TRAIN_MEAN
+    std = settings.CIFAR100_TRAIN_STD if args.dataset == 'cifar100' else settings.CIFAR10_TRAIN_STD
+
+    training_loader, test_loader, perm = dataset_loader(
+        args.dataset,
+        mean,
+        std,
         num_workers=4,
         batch_size=args.b,
         shuffle=True,
