@@ -35,6 +35,8 @@ if __name__ == '__main__':
     parser.add_argument('-gpu', action='store_true', default=False, help='use gpu or not')
     parser.add_argument('-b', type=int, default=16, help='batch size for dataloader')
     parser.add_argument('-seed', type=int, help='resume training')
+    parser.add_argument('-wrong_key', action='store_true', default=False, help='use gpu or not')
+
     args = parser.parse_args()
 
     if args.seed:
@@ -46,6 +48,9 @@ if __name__ == '__main__':
 
     mean = settings.CIFAR100_TRAIN_MEAN if args.dataset == 'cifar100' else settings.CIFAR10_TRAIN_MEAN
     std = settings.CIFAR100_TRAIN_STD if args.dataset == 'cifar100' else settings.CIFAR10_TRAIN_STD
+
+    if args.wrong_key:
+        perm = utils.Permutar(32,1) # new instance
 
     _, test_loader, _ = dataset_loader(
         args.dataset,
