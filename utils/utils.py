@@ -169,7 +169,7 @@ def calculate_offset(dims, stride, padding, kernel_size, permutation, batch=64):
                 offset[a * 2 + 1, i, j] = distance[1]
 
     offset = np.tile(offset, [batch, 1, 1, 1])
-    return torch.from_numpy(offset).float(), perm, index_positions
+    return torch.from_numpy(offset).float(), perm
 
 
 def retrieve_original_pixels(positions,perm):
