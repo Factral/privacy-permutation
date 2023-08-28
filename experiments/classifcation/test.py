@@ -69,8 +69,6 @@ if __name__ == '__main__':
     total = 0
     correct = 0.0
 
-    counter = 0
-
     with torch.no_grad():
         for n_iter, (image, label) in enumerate(test_loader):
             print("iteration: {}\ttotal {} iterations".format(n_iter + 1, len(test_loader)))
@@ -86,8 +84,6 @@ if __name__ == '__main__':
             
             #_, pred = output.topk(5, 1, largest=True, sorted=True)
             _, preds = output.max(1)
-            print(preds)
-            print(label)
 
             #print(pred == preds)
             #print(pred.shape)
@@ -95,10 +91,8 @@ if __name__ == '__main__':
 
             #label = label.view(label.size(0), -1).expand_as(pred)
             correct += preds.eq(label).sum()
-            counter += 1
-            print(correct)
-            if counter == 2:
-                break
+
+
 
     if args.gpu:
         print('GPU INFO.....')
